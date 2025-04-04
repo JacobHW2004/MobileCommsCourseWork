@@ -1,0 +1,62 @@
+#!/bin/sh
+# ============================================================================================
+# This unix script alanyses multiple numbers of scenarios
+# ============================================================================================
+FOLDER='.'
+mkdir $FOLDER/ANALYSIS	
+
+tcpcount=$(find . -name "*TCP.tr" | wc -l)
+cbrcount=$(find . -name "*CBR.tr" | wc -l)
+
+START=$(date +%s)
+COUNT=0								# Number of proccessed Files
+F=1
+T=600.1								
+
+for R in 'DSDV' 'DSR' 'AODV'						# Protocol Name
+do	
+  for TYPE in 'CBR' 		   			# Connection Type
+  do
+    for N in 25		   				# Number of Nodes
+    do
+      for C in 15		  				# Number of Connections
+      do
+	for S in 5						# Maximum Speed
+	do
+	  for P in 10						# Pause Time
+	  do
+	    for F in 1 2 3 4 5 6 7 8 9    			# Iteration Multiplication
+	    do
+	    date | awk '{ print "Date: "$1" " $3 "-"$2"-"$6 }' 
+	    date | awk '{ print "Time: "$4" " $5 }'  
+	    echo " " 					
+	    echo "Processing trace file $R-N$N-C$C-S$S-P$P-F$F-$TYPE.tr" 
+	    echo -n -e $S"\t"$P"\c" >> $FOLDER/ANALYSIS/$R-N$N-C$C-$TYPE.txt
+	    awk -f $FOLDER/analysis.awk $FOLDER'/TRACE/'$R'-N'$N'-C'$C'-S'$S'-P'$P'-F'$F'-'$TYPE'.tr' \
+	    >> $FOLDER/ANALYSIS/$R-N$N-C$C-$TYPE.txt
+	    echo "File $R-N$N-C$C-S$S-P$P-F$F-$TYPE.tr ..... Done" 					
+	    COUNT=`expr $COUNT + 1`
+	    F=`expr $F + 1`
+	    END=$(date +%s)
+	    DIFF=$(( $END - $START ))
+	    HOURS=$(( $DIFF / 3600 ))
+	    MIN=$(( $DIFF / 60 ))
+	    if [ "$MIN" -ge 60 ]
+	    then
+	      MINUTES=$(( $MIN % 60 ))
+	    else
+	      MINUTES=$MIN 
+	    fi
+	    echo "Now "$COUNT Trace Files Proccessed at $HOURS H:$MINUTES M""
+	    echo ""
+	    echo ""
+	    echo ""
+	    done
+	  done
+	done
+      done
+    done
+  done
+done
+
+exit
