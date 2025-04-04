@@ -1,10 +1,11 @@
 #!/bin/sh
 # ==========================================================================================
 # This file generates connection scenarios based on the connection type provided.
-# It creates three files:
+# It creates three files for each scenario:
 #   1) 25 nodes and 15 connections
 #   2) 100 nodes and 100 connections
 #   3) 200 nodes and 200 connections
+# For each scenario, three iterations are generated.
 # ==========================================================================================
 
 TYPE=$1
@@ -30,21 +31,23 @@ for scenario in "25:15" "100:100" "200:200"; do
   date | awk '{ print "Time: "$4" " $5 }'
   echo " "
   
-  if [ "$TYPE" = "CBR" ]; then
-    echo "Creating CBR Connection File ${TYPE}-N${N}-C${C} ... Please Wait !!"
-    ns /opt/ns-allinone-2.35/ns-2.35/indep-utils/cmu-scen-gen/cbrgen.tcl \
-       -type cbr -nn $N -seed $SEED -mc $C -rate 4.0 > ${TYPE}-N${N}-C${C}
-    echo "The File CBR-N${N}-C${C} .... Done!!"
-  else
-    echo "Creating TCP Connection File ${TYPE}-N${N}-C${C} ... Please Wait !!"
-    ns /opt/ns-allinone-2.35/ns-2.35/indep-utils/cmu-scen-gen/cbrgen.tcl \
-       -type tcp -nn $N -seed $SEED -mc $C > ${TYPE}-N${N}-C${C}
-    echo "The File TCP-N${N}-C${C} .... Done!!"
-  fi
-  
-  SEED=`expr $SEED + 1`
-  echo "======================================================================="
-  echo ""
+  # For each scenario, output three files (iterations)
+  for E in 1 2 3; do
+    if [ "$TYPE" = "CBR" ]; then
+      echo "Creating CBR Connection File ${TYPE}-N${N}-C${C}-E${E} ... Please Wait !!"
+      ns /opt/ns-allinone-2.35/ns-2.35/indep-utils/cmu-scen-gen/cbrgen.tcl \
+         -type cbr -nn $N -seed $SEED -mc $C -rate 4.0 > ${TYPE}-N${N}-C${C}-E${E}
+      echo "The File CBR-N${N}-C${C}-E${E} .... Done!!"
+    else
+      echo "Creating TCP Connection File ${TYPE}-N${N}-C${C}-E${E} ... Please Wait !!"
+      ns /opt/ns-allinone-2.35/ns-2.35/indep-utils/cmu-scen-gen/cbrgen.tcl \
+         -type tcp -nn $N -seed $SEED -mc $C > ${TYPE}-N${N}-C${C}-E${E}
+      echo "The File TCP-N${N}-C${C}-E${E} .... Done!!"
+    fi
+    SEED=`expr $SEED + 1`
+    echo "======================================================================="
+    echo ""
+  done
 done
 
 exit 0
