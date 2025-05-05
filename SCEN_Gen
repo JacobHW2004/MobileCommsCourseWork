@@ -1,65 +1,65 @@
 #!/bin/sh
 # ============================================================================================
-# This unix script runs multiple numbers of scenarios on ns2 to generate trace files
+# This unix script runs ns2 scenarios to generate trace files.
+# For each protocol (DSDV, DSR, AODV) and connection type (TCP),
+# and for each topology:
+#   • 25 nodes & 15 connections
+#   • 75 nodes & 45 connections
+#   • 150 nodes & 75 connections
+#
+# it now produces 3 movement iterations (I1–I3) × 3 connection iterations (E1–E3),
+# i.e. 9 trace files per protocol.
 # ============================================================================================
+
 FOLDER='.'
-mkdir ./TRACE
+mkdir -p "$FOLDER/TRACE"
 
-START=$(date +%s)							
-COUNT=0								# Number of Created Files
-X=500
-Y=500
-T=600.1								
+START=$(date +%s)
+COUNT=0
 
-for R in 'DSDV' 'DSR' 'AODV'							# Protocol Name
-do	
-  for TYPE in 'TCP' 		   				# Connection Type
-  do
-    for N in 25		   					# Number of Nodes
-    do
-      for C in 15		  				# Number of Connections
-      do
-	for S in 5		 				# Maximum Speed
-	do
-	  for P in 10						# Pause Time
-	  do
-	    F=1							# File Number
-	    for I in 1 2 3   					# Movement Iteration Number
-	    do
-	      for E in 1 2 3    				# Connections Iteration Number
-	      do
-		  date | awk '{ print "Date: "$1" " $3 "-"$2"-"$6 }' 
-		  date | awk '{ print "Time: "$4" " $5 }'  
-		  echo " " 					
-		  echo " " 
-		  ns trace.tcl $R $TYPE $N $C $S $P $X $Y $T \
-		  $FOLDER'/CONN_SCEN/'$TYPE'-N'$N'-C'$C'-E'$E \
-		  $FOLDER'/MOV_SCEN/MOV-N'$N'-S'$S'-P'$P'-I'$I \
-		  $FOLDER'/TRACE/'$R'-N'$N'-C'$C'-S'$S'-P'$P'-F'$F'-'$TYPE'.tr' 
-		  echo "The File "$R-N$N-C$C-S$S-P$P-F$F-$TYPE.tr .... Done!!""
-		  COUNT=`expr $COUNT + 1`
-		  F=`expr $F + 1`
-		  END=$(date +%s)
-		  DIFF=$(( $END - $START ))
-		  HOURS=$(( $DIFF / 3600 ))
-		  MIN=$(( $DIFF / 60 ))
-		  if [ "$MIN" -ge 60 ]
-		  then
-		    MINUTES=$(( $MIN % 60 ))
-		  else
-		    MINUTES=$MIN 
-		  fi
-		  echo "Now "$COUNT Files Done in $HOURS H:$MINUTES M""
-		  echo ""
-		  echo ""
-		  echo ""
-	      done
-	    done
-	  done
-	done
+# Fixed sim params
+X=500         # area X (m)
+Y=500         # area Y (m)
+T=600.1       # sim time (s)
+S=5           # max speed (m/s)
+P=10          # pause time (s)
+
+# Protocols and connection type
+PROTOCOLS="DSDV DSR AODV"
+TYPE=TCP
+
+# Topology scenarios
+for scenario in "25:15" "75:45" "150:75"; do
+  N=${scenario%%:*}
+  C=${scenario##*:}
+  
+  for R in $PROTOCOLS; do
+    for I in 1 2 3; do                  # movement iterations
+      for E in 1 2 3; do                # connection iterations
+        # Timestamp
+        date | awk '{ print "Date: "$1" " $3 "-"$2"-"$6 }'
+        date | awk '{ print "Time: "$4" " $5 }'
+        echo
+
+        echo "Running trace for Protocol=$R, Type=$TYPE, N=$N, C=$C, S=$S, P=$P, I=$I, E=$E ..."
+        ns trace.tcl $R $TYPE $N $C $S $P $X $Y $T \
+          "$FOLDER/CONN_SCEN/${TYPE}-N${N}-C${C}-E${E}" \
+          "$FOLDER/MOV_SCEN/MOV-N${N}-S${S}-P${P}-I${I}" \
+          "$FOLDER/TRACE/${R}-N${N}-C${C}-S${S}-P${P}-I${I}-E${E}-${TYPE}.tr"
+
+        echo "Done: TRACE/${R}-N${N}-C${C}-S${S}-P${P}-I${I}-E${E}-${TYPE}.tr"
+        COUNT=$((COUNT + 1))
+
+        # Elapsed time
+        ELAPSED=$(( $(date +%s) - START ))
+        H=$((ELAPSED / 3600))
+        M=$(((ELAPSED / 60) % 60))
+        echo "Now $COUNT files done (elapsed: ${H}h:${M}m)"
+        echo "======================================================================="
+        echo
       done
     done
   done
 done
 
-exit
+exit 0
